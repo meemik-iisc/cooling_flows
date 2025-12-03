@@ -1,0 +1,11 @@
+# Lock files (all types)
+.~lock.*
+.*~lock.*
+*.lock
+Pipfile.lock
+poetry.lock
+
+# LibreOffice temps
+.*\.~lock\..*#
+.*\.swp
+.*\.swo
