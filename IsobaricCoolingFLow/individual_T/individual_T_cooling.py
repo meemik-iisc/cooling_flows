@@ -26,7 +26,7 @@ Tc = 1e4               # K
 Th = 1e6               # K
 T0 = np.sqrt(Th * Tc)
 P0 = 1e3 * kB          # erg/cm^3
-Kt = 1e7               # ergcm^-1s^-1K^-1
+Kt = 1e5               # ergcm^-1s^-1K^-1
 
 # Dimensionless parameters
 zc_tilde = zc / delz
@@ -138,7 +138,7 @@ def solve_cooling_flow_eigenvalue(Kt_val, x0):
         Returns:
         --------
         residuals : array
-            [T(zh) - Th_tilde, dT/dz_at_zh - dT/dz_boundary_condition]
+            [T(zh) - Th_tilde, dT/dz_at_zh - 0]
             For now: just [T(zh) - Th_tilde] as single constraint
         """
         M_dot, dTdz_init = params
@@ -178,14 +178,17 @@ def solve_cooling_flow_eigenvalue(Kt_val, x0):
             T_zh = sol.y[0, -1]
             residual_T = T_zh - Th_tilde
             
-            # 2. For true eigenvalue: could add another condition
-            # For now, just return T residual (system is technically underdetermined)
-            # Alternative: add constraint that dT/dz at zh satisfies some condition
-            # Or: prescribe both T(zh) and dT/dz(zh)
+            # 2. dT/dz at zh should be zero
+            dTdz_zh = sol.y[1, -1]
+            residual_dTdz = dTdz_zh  # target is 0
             
-            print(f"  Call {call_count[0]:3d}: M_dot={M_dot:.3e}, dTdz={dTdz_init:.4f} | T(zh)={T_zh:.4f}, res={residual_T:.6e}")
+            print(
+                f"  Call {call_count[0]:3d}: M_dot={M_dot:.3e}, dTdz_init={dTdz_init:.4f} | "
+                f"T(zh)={T_zh:.4f}, dTdz(zh)={dTdz_zh:.4e}, "
+                f"res_T={residual_T:.6e}, res_dTdz={residual_dTdz:.6e}"
+            )
             
-            return [residual_T, 0.0]  # Second residual is dummy for now
+            return [residual_T, residual_dTdz]
             
         except Exception as e:
             print(f"  Call {call_count[0]:3d}: M_dot={M_dot:.3e}, dTdz={dTdz_init:.4f} | Exception: {str(e)}")
@@ -204,12 +207,16 @@ def solve_cooling_flow_eigenvalue(Kt_val, x0):
     
     params_sol, info, ier, msg = solution
     M_dot_solution, dTdz_solution = params_sol
+    res_T_final, res_dTdz_final = residual_function(params_sol)
     
     print(f"\n{msg}")
     print(f"✓ ROOT FINDING COMPLETED")
     print(f"  M_dot = {M_dot_solution:.6e}")
     print(f"  dT/dz|_zc = {dTdz_solution:.6f}")
     print(f"  Function calls: {info['nfev']}")
+    print(f"  Final residuals:")
+    print(f"    T(zh) - Th_tilde  = {res_T_final:.2e}")
+    print(f"    dT/dz(zh) - 0     = {res_dTdz_final:.2e}")
     print(f"  Residual norm: {np.linalg.norm(info['fvec']):.6e}")
     
     # Get final high-precision solution
@@ -244,7 +251,7 @@ if __name__ == "__main__":
     print("="*70 + "\n")
     
     # Initial guess
-    x0 = [1e-21, 10.0]
+    x0 = [1e-22, 10.0]
     
     # Solve using eigenvalue shooting
     M_dot_sol, dTdz_sol, z_plot, T_plot, sol = solve_cooling_flow_eigenvalue(Kt, x0)
