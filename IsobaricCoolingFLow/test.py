@@ -70,16 +70,16 @@ def solve_isothermal_analytical():
     print("="*70)
     
     # Coefficient
-    A = (cool_lambda(T0) * (delz**2) * (P0**2)) / ((kB**2) * (T0**3))
+    A = ((P0**2)*cool_lambda(T0)*(gamma-1)*mu*mp*delz)/(gamma*(kB**3)*(T0**3))
     
     print(f"\nODE: dT/dz = A * Λ(T) / (M_dot * T²)")
     print(f"Coefficient: A = {A:.6e}\n")
     
     # Integrand for I(T)
-    def integrand(T):
+    def integrand(T_tilde):
         """T² / Λ(T) - integrand for I(T)"""
-        lambda_val = cool_lambda(T)
-        return T**2 / lambda_val
+        lambda_tilde = cool_lambda(T_tilde*T0)/cool_lambda(T0)
+        return T_tilde**2 / lambda_tilde
     
     # ====================================================================
     # Build I(T) using ADAPTIVE MESH (log-space for better resolution)
@@ -87,13 +87,13 @@ def solve_isothermal_analytical():
     print("Building I(T) table using adaptive mesh...")
     
     # Use log-spaced mesh for better resolution where Λ(T) changes rapidly
-    T_mesh = np.logspace(np.log10(Tc), np.log10(Th), 500)
+    T_tilde_mesh = np.logspace(np.log10(Tc_tilde), np.log10(Th_tilde), 500)
     
     # Compute integrand on mesh
-    integrand_vals = np.array([integrand(T) for T in T_mesh])
+    integrand_vals = np.array([integrand(T_tilde) for T_tilde in T_tilde_mesh])
     
     # Integrate cumulatively using trapezoidal rule
-    I_vals = cumulative_trapezoid(integrand_vals, T_mesh, initial=0.0)
+    I_vals = cumulative_trapezoid(integrand_vals, T_tilde_mesh, initial=0.0)
     
     I_Th = I_vals[-1]
     
@@ -117,44 +117,44 @@ def solve_isothermal_analytical():
     
     # Create CubicSpline for smooth inversion (more robust than interp1d)
     try:
-        I_to_T_spline = CubicSpline(I_vals, T_mesh, bc_type='natural', extrapolate=False)
+        I_to_T_spline = CubicSpline(I_vals, T_tilde_mesh, bc_type='natural', extrapolate=False)
     except:
         # Fallback to linear interpolation if CubicSpline fails
-        I_to_T_spline = interp1d(I_vals, T_mesh, kind='linear', bounds_error=False)
+        I_to_T_spline = interp1d(I_vals, T_tilde_mesh, kind='linear', bounds_error=False)
     
     # Evaluate solution on mesh
-    z_plot = np.linspace(zc_tilde, zh_tilde, 500)
-    T_plot = []
+    z_tilde = np.linspace(zc_tilde, zh_tilde, 500)
+    T_tilde_plot = []
     
     print(f"\nEvaluating T(z) using inverse integral...")
-    for i, z_eval in enumerate(z_plot):
+    for i, z_eval in enumerate(z_tilde):
         # Normalized position in domain
         z_norm = (z_eval - zc_tilde) / (zh_tilde - zc_tilde)
         # Target I value at this z
         I_target = I_Th * z_norm
         # Get T from inverse
         try:
-            T_eval = I_to_T_spline(I_target)
+            T_tilde_eval = I_to_T_spline(I_target)
         except:
             # Fallback if out of bounds
             if I_target <= I_vals[0]:
-                T_eval = Tc
+                T_tilde_eval = Tc_tilde
             elif I_target >= I_vals[-1]:
-                T_eval = Th
+                T_tilde_eval = Th_tilde
             else:
                 # Linear interpolation fallback
                 idx = np.searchsorted(I_vals, I_target)
                 frac = (I_target - I_vals[idx-1]) / (I_vals[idx] - I_vals[idx-1])
-                T_eval = T_mesh[idx-1] + frac * (T_mesh[idx] - T_mesh[idx-1])
+                T_tilde_eval = T_tilde_mesh[idx-1] + frac * (T_tilde_mesh[idx] - T_tilde_mesh[idx-1])
         
-        T_plot.append(T_eval)
+        T_tilde_plot.append(T_tilde_eval)
     
-    T_plot = np.array(T_plot)
-    T_plot_tilde = T_plot / T0
+    T_tilde_plot = np.array(T_tilde_plot)
+    T_plot = T_tilde_plot*T0
     
     print(f"  Done!")
     
-    return M_dot_solution, z_plot, T_plot_tilde, T_plot
+    return M_dot_solution, z_tilde, T_tilde_plot, T_plot
 
 
 # ============================================================================
@@ -165,10 +165,10 @@ if __name__ == "__main__":
     print("ISOTHERMAL COOLING FLOW - ANALYTICAL SOLUTION")
     print("="*70 + "\n")
     
-    M_dot_sol, z_plot, T_plot_tilde, T_plot = solve_isothermal_analytical()
+    M_dot_sol, z_tilde, T_plot_tilde, T_plot = solve_isothermal_analytical()
     
     # Convert to physical units
-    z_physical = z_plot * delz / pc
+    z_physical = z_tilde * delz / pc
     T_physical = T_plot
     
     # Verification

@@ -26,7 +26,7 @@ Tc = 1e4               # K
 Th = 1e6               # K
 T0 = np.sqrt(Th * Tc)
 P0 = 1e3 * kB          # erg/cm^3
-Kt = 1e5               # ergcm^-1s^-1K^-1
+Kt = 1e8               # ergcm^-1s^-1K^-1
 
 # Dimensionless parameters
 zc_tilde = zc / delz
@@ -234,9 +234,14 @@ def solve_cooling_flow_eigenvalue(Kt_val, x0):
     
     if not sol_final.success:
         print(f"⚠ WARNING: Final integration - {sol_final.message}")
+        
+    # Biased grid: more resolution near z_c (cold boundary)
+    def biased_z_mesh(n_points=1000, bias_factor=3.0):
+        z_lin = np.linspace(zc_tilde, zh_tilde, n_points)
+        return zc_tilde + (zh_tilde - zc_tilde) * ((z_lin - zc_tilde)/(zh_tilde - zc_tilde))**bias_factor
     
     # Evaluate on fine grid
-    z_plot = np.linspace(zc_tilde, zh_tilde, 500)
+    z_plot = biased_z_mesh(n_points=1000, bias_factor=3.0)
     T_plot = sol_final.sol(z_plot)[0]
     
     return M_dot_solution, dTdz_solution, z_plot, T_plot, sol_final
@@ -251,7 +256,7 @@ if __name__ == "__main__":
     print("="*70 + "\n")
     
     # Initial guess
-    x0 = [1e-22, 10.0]
+    x0 = [8e-19, 10.0]
     
     # Solve using eigenvalue shooting
     M_dot_sol, dTdz_sol, z_plot, T_plot, sol = solve_cooling_flow_eigenvalue(Kt, x0)

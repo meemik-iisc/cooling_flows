@@ -23,7 +23,7 @@ Tc = 1e4               # K
 Th = 1e6               # K
 T0 = np.sqrt(Th * Tc)
 P0 = 1e3 * kB          # erg/cm^3
-Kt = 0               # ergcm^-1s^-1K^-1
+Kt = 1e4               # ergcm^-1s^-1K^-1
 
 # Dimensionless parameters
 zc_tilde = zc / delz
@@ -91,9 +91,9 @@ plt.savefig(save_filename1)
 plt.close(fig1)
 
 fig2,ax2 = plt.subplots(figsize=(8,6))
-ax2.plot(np.log10(T_tilde*T0),heat_flux/energy_norm, 'o-', linewidth=2, markersize=4,label="Heat Flux")
-ax2.plot(np.log10(T_tilde*T0),advection/energy_norm, 'o-', linewidth=2, markersize=4,label="Advection")
-ax2.plot(np.log10(T_tilde*T0),cooling/energy_norm, 'o-', linewidth=2, markersize=4,label="Cooling")
+ax2.plot(np.log10(T_tilde*T0),heat_flux/energy_norm, 'o-', linewidth=2, markersize=2,label="Heat Flux")
+ax2.plot(np.log10(T_tilde*T0),advection/energy_norm, 'o-', linewidth=2, markersize=2,label="Advection")
+ax2.plot(np.log10(T_tilde*T0),cooling/energy_norm, 'o-', linewidth=2, markersize=2,label="Cooling")
 ax2.plot(np.log10(T_tilde*T0), (heat_flux+advection-cooling)/energy_norm,'o-', linewidth=2, markersize=4, label="Heat Flux + Advection - Cooling")
 ax2.set_xlabel('$log_{10}T  [K]$')
 ax2.set_ylabel('Energy Balance ($10^{-25} erg cm^{-3} s^{-1}$)')
