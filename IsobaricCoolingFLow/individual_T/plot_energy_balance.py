@@ -23,7 +23,7 @@ Tc = 1e4               # K
 Th = 1e6               # K
 T0 = np.sqrt(Th * Tc)
 P0 = 1e3 * kB          # erg/cm^3
-Kt = 1e4               # ergcm^-1s^-1K^-1
+Kt = 0               # ergcm^-1s^-1K^-1
 
 # Dimensionless parameters
 zc_tilde = zc / delz
