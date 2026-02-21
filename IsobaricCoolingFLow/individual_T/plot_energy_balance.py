@@ -23,7 +23,7 @@ Tc = 1e4               # K
 Th = 1e6               # K
 T0 = np.sqrt(Th * Tc)
 P0 = 1e3 * kB          # erg/cm^3
-Kt = 0               # ergcm^-1s^-1K^-1
+Kt = 1e8               # ergcm^-1s^-1K^-1
 
 # Dimensionless parameters
 zc_tilde = zc / delz
@@ -105,15 +105,22 @@ plt.close(fig2)
 
 
 fig3,ax3 = plt.subplots(figsize=(8,6))
-ax3.plot(np.log10(T_tilde*T0),np.abs(heat_flux), 'o-', linewidth=2, markersize=2,label="Heat Flux")
-ax3.plot(np.log10(T_tilde*T0),np.abs(advection), 'o-', linewidth=2, markersize=2,label="Advection")
-ax3.plot(np.log10(T_tilde*T0),np.abs(cooling), 'o-', linewidth=2, markersize=2,label="Cooling")
+ax3.plot(np.log10(T_tilde*T0),np.abs(heat_flux), 'o-', linewidth=2, markersize=2,label="Heat Flux", color = 'red')
+ax3.plot(np.log10(T_tilde*T0),np.abs(advection), 'o-', linewidth=2, markersize=2,label="Advection", color = 'green')
+ax3.plot(np.log10(T_tilde*T0),np.abs(cooling), 'o-', linewidth=2, markersize=2,label="Cooling", color = 'blue')
 # ax3.plot(np.log10(T_tilde*T0), np.abs(heat_flux+advection-cooling),'o-', linewidth=2, markersize=4, label="Heat Flux + Advection - Cooling")
-ax3.set_xlabel('$log_{10}T  [K]$')
-ax3.set_ylabel('Energy Balance ($erg cm^{-3} s^{-1}$) [log]')
+ax3.set_xlabel('$log_{10}T$ [K]', fontsize = 14)
+ax3.set_ylabel(r'($erg\,cm^{-3}\,s^{-1}$)', fontsize = 14)
 ax3.set_yscale("log")
-ax3.grid()
-ax3.legend()
+ax3.set_ylim(1e-30,1e-21)
+ax3.grid(True)
+ax3.legend(fontsize = 12)
+ax3.tick_params(axis='both', which='major', labelsize=14)
+# Customize log grid
+ax3.minorticks_on()
+ax3.grid(True, which='both', ls='-', alpha=0.3)
+ax3.grid(which='major', alpha=0.7, linewidth=1.2)
+ax3.grid(which='minor', alpha=0.5, linewidth=1.0)
 save_filename2 = os.path.join(output_dir,f"energy_balance_Kt_{Kt_str}_vs_T_logscale.png")
 plt.savefig(save_filename2)
 plt.close(fig3)
